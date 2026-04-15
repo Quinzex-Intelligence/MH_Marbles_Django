@@ -12,7 +12,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     build-essential \
     gcc \
-    libpq-dev \
+    default-libmusqlclient-dev \
     python3-dev \
     libjpeg-dev \
     zlib1g-dev \
