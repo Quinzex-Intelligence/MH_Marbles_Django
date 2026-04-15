@@ -9,6 +9,8 @@ django-cors-headers==4.4.0
 
 django-environ==0.11.2
 
+gunicorn
+
 mysqlclient==2.2.4
 
 django-storages==1.14.4
