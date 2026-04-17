@@ -15,6 +15,7 @@ def _collect_images(validated_data, folder):
 
 
 class CarouselSlideSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
     image_urls = serializers.SerializerMethodField()
 
     # Optional individual image upload slots
@@ -30,6 +31,9 @@ class CarouselSlideSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'image_keys': {'required': False}
         }
+
+    def get_image_url(self, obj):
+        return obj.image_url
 
     def get_image_urls(self, obj):
         return obj.get_image_urls()

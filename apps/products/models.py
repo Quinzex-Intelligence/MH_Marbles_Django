@@ -12,6 +12,11 @@ class Category(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    @property
+    def image_url(self):
+        urls = self.get_image_urls()
+        return urls[0] if urls else None
+
     def get_image_urls(self):
         if not self.image_keys:
             return []
@@ -51,6 +56,11 @@ class Product(models.Model):
     is_featured = models.BooleanField(default=False, db_index=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def image_url(self):
+        urls = self.get_image_urls()
+        return urls[0] if urls else None
 
     def clean(self):
         from django.core.exceptions import ValidationError

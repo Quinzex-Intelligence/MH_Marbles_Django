@@ -16,6 +16,7 @@ def _collect_logos(validated_data, folder):
 
 
 class CompanySerializer(serializers.ModelSerializer):
+    logo_url = serializers.SerializerMethodField()
     logo_urls = serializers.SerializerMethodField()
 
     # Optional individual logo upload slots
@@ -31,6 +32,9 @@ class CompanySerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'logo_keys': {'required': False}
         }
+
+    def get_logo_url(self, obj):
+        return obj.logo_url
 
     def get_logo_urls(self, obj):
         return obj.get_logo_urls()
