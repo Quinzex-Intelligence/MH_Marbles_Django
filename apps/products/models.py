@@ -48,7 +48,24 @@ class Product(models.Model):
     # Stores up to 5 S3 object keys as a JSON list
     image_keys = models.JSONField(default=list, blank=True)
 
+    is_featured = models.BooleanField(default=False, db_index=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.is_featured:
+            # Check if we already have 6 featured products
+            qs = Product.objects.filter(is_featured=True)
+            if self.pk:
+                qs = qs.exclude(pk=self.pk)
+            
+            if qs.count() >= 6:
+                raise ValidationError("Only 6 products can be featured at a time.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def get_image_urls(self):
         if not self.image_keys:

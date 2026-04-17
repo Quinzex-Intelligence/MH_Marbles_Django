@@ -36,7 +36,18 @@ class ProductViewSet(ModelViewSet):
         "size",
         "color",
         "finish",
+        "is_featured",
     ]
+
+    @action(detail=False, methods=["GET"], url_path="featured")
+    def featured(self, request):
+        """
+        Returns up to 6 featured products.
+        GET /api/products/featured/
+        """
+        qs = Product.objects.filter(is_featured=True).order_by("-created_at")[:6]
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)
 
     @action(detail=False, methods=["POST"], url_path='upload')
     def upload_image(self, request):

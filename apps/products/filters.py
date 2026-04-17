@@ -38,6 +38,7 @@ class ProductFilter(django_filters.FilterSet):
             "size",
             "color",
             "finish",
+            "is_featured",
         ]
 
     def filter_search(self, queryset, name, value):

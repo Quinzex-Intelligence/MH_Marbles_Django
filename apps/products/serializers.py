@@ -68,6 +68,18 @@ class ProductSerializer(serializers.ModelSerializer):
     def get_image_urls(self, obj):
         return obj.get_image_urls()
 
+    def validate(self, attrs):
+        is_featured = attrs.get('is_featured', False)
+        if is_featured:
+            qs = Product.objects.filter(is_featured=True)
+            if self.instance:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.count() >= 6:
+                raise serializers.ValidationError({
+                    "is_featured": "Only 6 products can be featured. Please un-feature one before featuring another."
+                })
+        return attrs
+
     def create(self, validated_data):
         keys = _collect_images(validated_data, "products")
         if keys:
