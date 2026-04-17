@@ -14,15 +14,16 @@ class SanitaryProduct(models.Model):
 
     description = models.TextField(blank=True)
 
-    image_key = models.CharField(max_length=500, blank=True, null=True)
+    # Stores up to 5 S3 object keys as a JSON list
+    image_keys = models.JSONField(default=list, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def get_image_url(self):
-        if not self.image_key:
-            return None
+    def get_image_urls(self):
+        if not self.image_keys:
+            return []
         from core.s3 import generate_presigned_url
-        return generate_presigned_url(self.image_key)
+        return [generate_presigned_url(k) for k in self.image_keys if k]
 
     def __str__(self):
         return self.name

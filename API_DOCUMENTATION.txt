@@ -27,10 +27,19 @@ Response (200 OK):
 Auth Required: Yes (JWT Bearer Token)
 Content-Type: multipart/form-data
 Description: Create a new company.
-Request Body:
-- name: "Marble Kings" (Text)
-- logo: File (Image) -> Automatically uploaded to S3
+Request Body (Send as FormData):
+- name: "Marble Kings" (Text) [REQUIRED]
+- logo: File (Image) [OPTIONAL] -> Automatically uploaded to S3
 Response (201 Created): Returns the generated JSON object.
+
+[PUT] /api/companies/{id}/
+Auth Required: Yes (JWT Bearer Token)
+Content-Type: multipart/form-data
+Description: Fully update an existing company (all fields required).
+Request Body (Send as FormData):
+- name: "Marble Kings" (Text) [REQUIRED]
+- logo: File (Image) [OPTIONAL] -> Automatically uploaded to S3
+Response (200 OK): Returns the updated JSON object.
 
 [PATCH] /api/companies/{id}/ & [DELETE] /api/companies/{id}/
 Auth Required: Yes
@@ -58,14 +67,30 @@ Response (200 OK):
 [POST] /api/hero_carousel/
 Auth Required: Yes
 Content-Type: multipart/form-data
-Request Body:
-- heading: (Text)
-- subtext: (Text)
-- cta_text: (Text)
-- cta_link: (Text)
-- order: (Number)
-- image: File (Image) -> Automatically uploaded to S3
+Description: Create a new carousel slide.
+Request Body (Send as FormData):
+- image: File (Image) [OPTIONAL] -> Automatically uploaded to S3
+- heading: (Text) [OPTIONAL]
+- subtext: (Text) [OPTIONAL]
+- cta_text: (Text) [OPTIONAL]
+- cta_link: (Text) [OPTIONAL]
+- is_active: true/false (Boolean) [OPTIONAL, default: true]
+- order: (Number) [OPTIONAL, default: 0]
 Response (201 Created): Returns generated JSON object.
+
+[PUT] /api/hero_carousel/{id}/
+Auth Required: Yes
+Content-Type: multipart/form-data
+Description: Fully update an existing carousel slide.
+Request Body (Send as FormData):
+- image: File (Image) [OPTIONAL] -> Automatically uploaded to S3
+- heading: (Text) [OPTIONAL]
+- subtext: (Text) [OPTIONAL]
+- cta_text: (Text) [OPTIONAL]
+- cta_link: (Text) [OPTIONAL]
+- is_active: true/false (Boolean) [OPTIONAL]
+- order: (Number) [OPTIONAL]
+Response (200 OK): Returns updated JSON object.
 
 [PATCH] /api/hero_carousel/{id}/ & [DELETE] /api/hero_carousel/{id}/
 Auth Required: Yes
@@ -89,8 +114,28 @@ Response (200 OK):
   }
 ]
 
-[POST] /api/sanitary/categories/ & [PATCH] /api/sanitary/categories/{id}/
-Description: Modifying a category here affects both Sanitary and regular Products.
+[POST] /api/sanitary/categories/
+Auth Required: Yes
+Content-Type: multipart/form-data
+Description: Create a new category (shared with Products API).
+Request Body (Send as FormData):
+- name: (Text) [REQUIRED]
+- slug: (Text) [REQUIRED]
+- image: File (Image) [OPTIONAL] -> Automatically uploaded to S3
+Response (201 Created): Returns JSON.
+
+[PUT] /api/sanitary/categories/{id}/
+Auth Required: Yes
+Content-Type: multipart/form-data
+Description: Fully update a category. Affects both Sanitary and Products.
+Request Body (Send as FormData):
+- name: (Text) [REQUIRED]
+- slug: (Text) [REQUIRED]
+- image: File (Image) [OPTIONAL] -> Automatically uploaded to S3
+Response (200 OK): Returns updated JSON.
+
+[PATCH] /api/sanitary/categories/{id}/ & [DELETE] /api/sanitary/categories/{id}/
+Auth Required: Yes
 
 *** Sanitary Products ***
 [GET] /api/sanitary/
@@ -111,12 +156,24 @@ Response (200 OK):
 [POST] /api/sanitary/
 Auth Required: Yes
 Content-Type: multipart/form-data
-Request Body:
-- name: (Text)
-- category: (ID integer of SanitaryCategory)
-- description: (Text)
-- image: File (Image) -> Automatically uploaded to S3
+Description: Create a new sanitary product.
+Request Body (Send as FormData):
+- name: (Text) [REQUIRED]
+- category: (ID integer) [OPTIONAL]
+- description: (Text) [OPTIONAL]
+- image: File (Image) [OPTIONAL] -> Automatically uploaded to S3
 Response (201 Created): Returns JSON.
+
+[PUT] /api/sanitary/{id}/
+Auth Required: Yes
+Content-Type: multipart/form-data
+Description: Fully update an existing sanitary product.
+Request Body (Send as FormData):
+- name: (Text) [REQUIRED]
+- category: (ID integer) [OPTIONAL]
+- description: (Text) [OPTIONAL]
+- image: File (Image) [OPTIONAL] -> Automatically uploaded to S3
+Response (200 OK): Returns updated JSON.
 
 [PATCH] /api/sanitary/{id}/ & [DELETE] /api/sanitary/{id}/
 Auth Required: Yes
@@ -142,12 +199,24 @@ Response (200 OK):
 [POST] /api/collections/
 Auth Required: Yes
 Content-Type: multipart/form-data
-Request Body:
-- name: (Text)
-- description: (Text)
-- cover_image: File (Image) -> Automatically uploaded to S3
-- products: (Array of Product IDs)
+Description: Create a new product collection.
+Request Body (Send as FormData):
+- name: (Text) [REQUIRED]
+- description: (Text) [OPTIONAL]
+- cover_image: File (Image) [OPTIONAL] -> Automatically uploaded to S3
+- products: (Array of Product IDs) [OPTIONAL]
 Response (201 Created): Returns JSON.
+
+[PUT] /api/collections/{id}/
+Auth Required: Yes
+Content-Type: multipart/form-data
+Description: Fully update an existing product collection.
+Request Body (Send as FormData):
+- name: (Text) [REQUIRED]
+- description: (Text) [OPTIONAL]
+- cover_image: File (Image) [OPTIONAL] -> Automatically uploaded to S3
+- products: (Array of Product IDs) [OPTIONAL]
+Response (200 OK): Returns updated JSON.
 
 [PATCH] /api/collections/{id}/ & [DELETE] /api/collections/{id}/
 Auth Required: Yes
@@ -182,16 +251,33 @@ Response (200 OK):
 [POST] /api/products/
 Auth Required: Yes
 Content-Type: multipart/form-data
+Description: Create a new product.
 Request Body (Send as FormData):
-- name: "Classic Carrara" (Text)
-- company: 1 (Number)
-- category: 2 (Number)
-- size: "800x800" (Text)
-- color: "White" (Text)
-- finish: "Matt" (Text)
-- sku: "SKU-CAR-01" (Text)
-- image: File (Image) -> Automatically uploaded to S3
+- name: "Classic Carrara" (Text) [REQUIRED]
+- company: 1 (Number/FK) [REQUIRED]
+- category: 2 (Number/FK) [REQUIRED]
+- size: "800x800" (Text) [REQUIRED]
+- color: "White" (Text) [REQUIRED]
+- finish: "Matt" (Text) [REQUIRED]
+- sku: "SKU-CAR-01" (Text) [REQUIRED, Unique]
+- image: File (Image) [OPTIONAL if image_key given] -> Automatically uploaded to S3
+- image_key: (Text) [OPTIONAL if image given]
 Response (201 Created): Returns JSON.
+
+[PUT] /api/products/{id}/
+Auth Required: Yes
+Content-Type: multipart/form-data
+Description: Fully update an existing product.
+Request Body (Send as FormData):
+- name: "Classic Carrara" (Text) [REQUIRED]
+- company: 1 (Number/FK) [REQUIRED]
+- category: 2 (Number/FK) [REQUIRED]
+- size: "800x800" (Text) [REQUIRED]
+- color: "White" (Text) [REQUIRED]
+- finish: "Matt" (Text) [REQUIRED]
+- sku: "SKU-CAR-01" (Text) [REQUIRED, Unique]
+- image: File (Image) [OPTIONAL] -> Automatically uploaded to S3
+Response (200 OK): Returns updated JSON.
 
 [PATCH] /api/products/{id}/ & [DELETE] /api/products/{id}/
 Auth Required: Yes
