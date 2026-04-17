@@ -15,7 +15,6 @@ def _collect_images(validated_data, folder):
 
 
 class ProductCollectionSerializer(serializers.ModelSerializer):
-    image_url = serializers.SerializerMethodField()
     image_urls = serializers.SerializerMethodField()
 
     # Optional individual image upload slots
@@ -29,11 +28,8 @@ class ProductCollectionSerializer(serializers.ModelSerializer):
         model = ProductCollection
         fields = "__all__"
         extra_kwargs = {
-            'image_keys': {'required': False}
+            'image_keys': {'write_only': True, 'required': False}
         }
-
-    def get_image_url(self, obj):
-        return obj.image_url
 
     def get_image_urls(self, obj):
         return obj.get_image_urls()

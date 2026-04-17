@@ -16,7 +16,6 @@ def _collect_images(validated_data, folder):
 
 
 class CategorySerializer(serializers.ModelSerializer):
-    image_url = serializers.SerializerMethodField()
     image_urls = serializers.SerializerMethodField()
 
     # Optional individual image upload slots
@@ -30,11 +29,9 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = "__all__"
         extra_kwargs = {
-            'image_keys': {'required': False}
+            'image_keys': {'write_only': True, 'required': False}
         }
 
-    def get_image_url(self, obj):
-        return obj.image_url
 
     def get_image_urls(self, obj):
         return obj.get_image_urls()
@@ -53,7 +50,6 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    image_url = serializers.SerializerMethodField()
     image_urls = serializers.SerializerMethodField()
 
     # Optional individual image upload slots
@@ -67,11 +63,9 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = "__all__"
         extra_kwargs = {
-            'image_keys': {'required': False}
+            'image_keys': {'write_only': True, 'required': False}
         }
 
-    def get_image_url(self, obj):
-        return obj.image_url
 
     def get_image_urls(self, obj):
         return obj.get_image_urls()

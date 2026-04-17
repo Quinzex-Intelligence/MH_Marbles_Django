@@ -6,11 +6,6 @@ class Company(models.Model):
     logo_keys = models.JSONField(default=list, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    @property
-    def logo_url(self):
-        urls = self.get_logo_urls()
-        return urls[0] if urls else None
-
     def get_logo_urls(self):
         if not self.logo_keys:
             return []

@@ -11,11 +11,6 @@ class CarouselSlide(models.Model):
     order = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    @property
-    def image_url(self):
-        urls = self.get_image_urls()
-        return urls[0] if urls else None
-
     def get_image_urls(self):
         if not self.image_keys:
             return []
