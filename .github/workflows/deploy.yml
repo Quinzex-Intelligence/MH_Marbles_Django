@@ -8,6 +8,8 @@ on:
 env:
   AWS_REGION: ap-south-2
   ECR_REPO: mhmarbles/django
+  BASE_REPO: mhmarbles/python-base
+  BASE_TAG: base-v1
   APP_DIR: /home/ubuntu/django
 
 jobs:
@@ -35,12 +37,15 @@ jobs:
       - name: Login to ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      # 5. Build & Push Image (ARM64)
+      # 5. Build & Push Docker Image
       - name: Build and Push Docker Image
         run: |
           set -e
 
           IMAGE_TAG=${GITHUB_SHA}
+
+          BASE_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.BASE_REPO }}:${{ env.BASE_TAG }}
+
           IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO }}:$IMAGE_TAG
 
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
@@ -48,18 +53,19 @@ jobs:
 
           docker buildx build \
             --platform linux/arm64 \
+            --build-arg BASE_IMAGE=$BASE_IMAGE \
             -t $IMAGE_URI \
             --push .
 
-      # 6. Verify image
-      - name: Verify Image Exists
+      # 6. Verify image exists in ECR
+      - name: Verify Image Exists in ECR
         run: |
           aws ecr describe-images \
             --repository-name ${{ env.ECR_REPO }} \
             --image-ids imageTag=$IMAGE_TAG \
             --region $AWS_REGION
 
-      # 7. Deploy via SSM
+      # 7. Deploy to EC2 via SSM
       - name: Deploy to EC2 via SSM
         run: |
           set -e
@@ -110,11 +116,27 @@ jobs:
               exit 0
             elif [[ "$STATUS" == "Failed" ]]; then
               echo "Deployment failed"
+
+              aws ssm get-command-invocation \
+                --command-id $COMMAND_ID \
+                --instance-id "${{ secrets.EC2_INSTANCE_ID }}" \
+                --region $AWS_REGION \
+                --query '{Status:Status,StdOut:StandardOutputContent,StdErr:StandardErrorContent}' \
+                --output text
+
               exit 1
             fi
 
             sleep 15
           done
 
-          echo "Timeout reached"
+          echo "Timeout reached. Fetching logs..."
+
+          aws ssm get-command-invocation \
+            --command-id $COMMAND_ID \
+            --instance-id "${{ secrets.EC2_INSTANCE_ID }}" \
+            --region $AWS_REGION \
+            --query '{Status:Status,StdOut:StandardOutputContent,StdErr:StandardErrorContent}' \
+            --output text
+
           exit 1
