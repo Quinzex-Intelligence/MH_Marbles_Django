@@ -8,7 +8,7 @@ ENV PYTHONUNBUFFERED=1
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies (required for many Python packages)
+# Install system dependencies required for building Python packages
 RUN apt-get update && apt-get install -y \
     build-essential \
     gcc \
@@ -20,20 +20,22 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first (better caching)
+# Copy only dependency file first to leverage Docker layer caching
 COPY requirements.txt .
 
-# Upgrade pip and install dependencies (verbose for debugging)
-RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt -v
+# Upgrade pip and install Python dependencies
+# Use cache mount to speed up repeated builds (requires BuildKit)
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --upgrade pip && \
+    pip install -r requirements.txt
 
-# Copy project files
+# Copy the rest of the application code
 COPY . .
 
-# Collect static files (safe fallback)
+# Collect static files (does not fail build if Django settings are incomplete)
 RUN python manage.py collectstatic --noinput || true
 
-# Expose Django port
+# Expose application port
 EXPOSE 8000
 
 # Start Django using Gunicorn
