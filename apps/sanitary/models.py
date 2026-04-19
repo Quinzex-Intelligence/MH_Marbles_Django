@@ -12,6 +12,14 @@ class SanitaryProduct(models.Model):
         blank=True
     )
 
+    company = models.ForeignKey(
+        "companies.Company",
+        on_delete=models.CASCADE,
+        related_name="sanitary_products",
+        null=True,
+        blank=True
+    )
+
     description = models.TextField(blank=True)
 
     # Stores up to 5 S3 object keys as a JSON list

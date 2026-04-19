@@ -13,4 +13,4 @@ class SanitaryCategoryViewSet(viewsets.ModelViewSet):
 class SanitaryProductViewSet(viewsets.ModelViewSet):
     queryset = SanitaryProduct.objects.all().order_by("-created_at")
     serializer_class = SanitarySerializer
-    filterset_fields = ["category"]
+    filterset_fields = ["category", "company"]
