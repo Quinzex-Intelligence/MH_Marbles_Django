@@ -19,30 +19,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. Setup Python
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      # 3. Cache pip dependencies
-      - name: Cache pip
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            pip-
-
-      # 4. Install dependencies (optional validation step)
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      # 5. Setup Docker Buildx
+      # 2. Setup Docker Buildx
       - name: Setup Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 6. Configure AWS credentials
+      # 3. Configure AWS credentials
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -50,11 +31,11 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # 7. Login to ECR
+      # 4. Login to ECR
       - name: Login to ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      # 8. Build & Push Docker Image (ARM64)
+      # 5. Build & Push Image (ARM64)
       - name: Build and Push Docker Image
         run: |
           set -e
@@ -70,15 +51,15 @@ jobs:
             -t $IMAGE_URI \
             --push .
 
-      # 9. Verify image exists
-      - name: Verify Image Exists in ECR
+      # 6. Verify image
+      - name: Verify Image Exists
         run: |
           aws ecr describe-images \
             --repository-name ${{ env.ECR_REPO }} \
             --image-ids imageTag=$IMAGE_TAG \
             --region $AWS_REGION
 
-      # 10. Deploy via SSM
+      # 7. Deploy via SSM
       - name: Deploy to EC2 via SSM
         run: |
           set -e
