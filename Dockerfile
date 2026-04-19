@@ -1,14 +1,12 @@
-# Base image
-FROM python:3.11-slim
+# -------- Stage 1: Builder --------
+FROM python:3.11-slim AS builder
 
-# Environment settings
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Set working directory
 WORKDIR /app
 
-# Install system dependencies required for building Python packages
+# Install build dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
     gcc \
@@ -17,26 +15,38 @@ RUN apt-get update && apt-get install -y \
     python3-dev \
     libjpeg-dev \
     zlib1g-dev \
-    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy only dependency file first to leverage Docker layer caching
+# Copy requirements and install into a separate directory
 COPY requirements.txt .
 
-# Upgrade pip and install Python dependencies
-# Use cache mount to speed up repeated builds (requires BuildKit)
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install --upgrade pip && \
-    pip install -r requirements.txt
+RUN pip install --upgrade pip && \
+    pip install --prefix=/install -r requirements.txt
 
-# Copy the rest of the application code
+# -------- Stage 2: Runtime --------
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# Install only runtime dependencies - No Compilers added here
+RUN apt-get update && apt-get install -y \
+    default-libmysqlclient-dev \
+    libjpeg-dev \
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy installed Python packages from builder
+COPY --from=builder /install /usr/local
+
+# Copy app code
 COPY . .
 
-# Collect static files (does not fail build if Django settings are incomplete)
+# Collect static files
 RUN python manage.py collectstatic --noinput || true
 
-# Expose application port
 EXPOSE 8000
 
-# Start Django using Gunicorn
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "config.wsgi:application"]
