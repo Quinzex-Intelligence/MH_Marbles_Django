@@ -10,15 +10,16 @@ from .serializers import ProductSerializer, CategorySerializer
 from .filters import ProductFilter
 
 from core.pagination import ProductCursorPagination
+from core.cache import RedisCacheMixin
 
 
-class CategoryViewSet(ModelViewSet):
+class CategoryViewSet(RedisCacheMixin, ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     pagination_class = None # No pagination for categories usually
 
 
-class ProductViewSet(ModelViewSet):
+class ProductViewSet(RedisCacheMixin, ModelViewSet):
 
     queryset = Product.objects.all().order_by("-created_at")
 

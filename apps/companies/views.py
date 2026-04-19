@@ -1,6 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+from core.cache import cache_response, RedisCacheMixin
 
 from .models import Company
 from .serializers import CompanySerializer
@@ -8,6 +9,7 @@ from .services import CompanyService
 
 
 @api_view(["GET"])
+@cache_response('company')
 def get_companies(request):
 
     companies = CompanyService.get_all_companies()
@@ -18,6 +20,7 @@ def get_companies(request):
 
 
 @api_view(["POST"])
+@cache_response('company')
 def create_company(request):
 
     serializer = CompanySerializer(data=request.data, context={'request': request})
@@ -32,6 +35,7 @@ def create_company(request):
 
 
 @api_view(["PUT"])
+@cache_response('company')
 def update_company(request, company_id):
 
     company = Company.objects.get(id=company_id)
@@ -48,6 +52,7 @@ def update_company(request, company_id):
 
 
 @api_view(["DELETE"])
+@cache_response('company')
 def delete_company(request, company_id):
 
     company = Company.objects.get(id=company_id)
@@ -58,6 +63,6 @@ def delete_company(request, company_id):
 
 from rest_framework import viewsets
 
-class CompanyViewSet(viewsets.ModelViewSet):
+class CompanyViewSet(RedisCacheMixin, viewsets.ModelViewSet):
     queryset = Company.objects.all()
     serializer_class = CompanySerializer

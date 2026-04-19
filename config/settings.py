@@ -115,6 +115,27 @@ DATABASES = {
     }
 }
 
+# Cache settings
+_redis_url = env('REDIS_URL')
+_is_ssl = _redis_url.startswith('rediss://')
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': _redis_url,
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'CONNECTION_POOL_KWARGS': {}
+        }
+    }
+}
+
+if _is_ssl:
+    # Additional SSL options for production-grade security
+    CACHES['default']['OPTIONS']['CONNECTION_POOL_KWARGS'].update({
+        'ssl_cert_reqs': 'none', # common for some clouds, change to 'required' for stricter security
+    })
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

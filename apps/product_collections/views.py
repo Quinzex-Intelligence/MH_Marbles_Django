@@ -1,6 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+from core.cache import cache_response, RedisCacheMixin
 
 from .models import ProductCollection
 from .serializers import ProductCollectionSerializer
@@ -8,6 +9,7 @@ from .services import CollectionService
 
 
 @api_view(["GET"])
+@cache_response('productcollection')
 def get_collections(request):
 
     collections = CollectionService.get_all_collections()
@@ -18,6 +20,7 @@ def get_collections(request):
 
 
 @api_view(["GET"])
+@cache_response('productcollection')
 def get_collection(request, collection_id):
 
     collection = CollectionService.get_collection(collection_id)
@@ -28,6 +31,7 @@ def get_collection(request, collection_id):
 
 
 @api_view(["POST"])
+@cache_response('productcollection')
 def create_collection(request):
 
     serializer = ProductCollectionSerializer(data=request.data)
@@ -42,6 +46,7 @@ def create_collection(request):
 
 
 @api_view(["PUT"])
+@cache_response('productcollection')
 def update_collection(request, collection_id):
 
     collection = ProductCollection.objects.get(id=collection_id)
@@ -58,6 +63,7 @@ def update_collection(request, collection_id):
 
 
 @api_view(["DELETE"])
+@cache_response('productcollection')
 def delete_collection(request, collection_id):
 
     collection = ProductCollection.objects.get(id=collection_id)
@@ -68,6 +74,6 @@ def delete_collection(request, collection_id):
 
 from rest_framework import viewsets
 
-class ProductCollectionViewSet(viewsets.ModelViewSet):
+class ProductCollectionViewSet(RedisCacheMixin, viewsets.ModelViewSet):
     queryset = ProductCollection.objects.all()
     serializer_class = ProductCollectionSerializer

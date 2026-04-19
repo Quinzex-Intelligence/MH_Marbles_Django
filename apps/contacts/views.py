@@ -1,8 +1,9 @@
 from rest_framework import viewsets, permissions
 from .models import ContactInquiry
 from .serializers import ContactInquirySerializer
+from core.cache import RedisCacheMixin
 
-class ContactInquiryViewSet(viewsets.ModelViewSet):
+class ContactInquiryViewSet(RedisCacheMixin, viewsets.ModelViewSet):
     queryset = ContactInquiry.objects.all()
     serializer_class = ContactInquirySerializer
 
