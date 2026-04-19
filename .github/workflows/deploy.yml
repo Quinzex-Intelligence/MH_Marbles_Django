@@ -16,16 +16,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout
+      # 1. Checkout FULL history
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
-      # 2. Detect Dockerfile.base changes
+      # 2. Detect base image changes
       - name: Check for base image changes
-        id: base_check
         run: |
-          git fetch origin main
-          if git diff --name-only HEAD~1 HEAD | grep -q "Dockerfile.base"; then
+          if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+            echo "BASE_CHANGED=true" >> $GITHUB_ENV
+          elif git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q "Dockerfile.base"; then
             echo "BASE_CHANGED=true" >> $GITHUB_ENV
           else
             echo "BASE_CHANGED=false" >> $GITHUB_ENV
@@ -35,7 +37,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 4. Configure AWS credentials
+      # 4. Configure AWS
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -47,26 +49,11 @@ jobs:
       - name: Login to ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      # 6. Get next base version (only if changed)
-      - name: Get next base version
-        if: env.BASE_CHANGED == 'true'
-        id: base_version
-        run: |
-          EXISTING_TAGS=$(aws ecr list-images \
-            --repository-name $BASE_REPO \
-            --query 'imageIds[*].imageTag' \
-            --output text)
-
-          COUNT=$(echo "$EXISTING_TAGS" | grep -o "base-v[0-9]*" | wc -l)
-          NEXT=$((COUNT + 1))
-
-          echo "BASE_TAG=base-v$NEXT" >> $GITHUB_ENV
-
-      # 7. Build & push base image (only if changed)
+      # 6. Build base image ONLY if changed
       - name: Build and Push Base Image
         if: env.BASE_CHANGED == 'true'
         run: |
-          BASE_IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${BASE_REPO}:${BASE_TAG}
+          BASE_IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.BASE_REPO }}:latest
 
           docker buildx build \
             --platform linux/arm64 \
@@ -74,13 +61,13 @@ jobs:
             -t $BASE_IMAGE_URI \
             --push .
 
-      # 8. Use latest base tag if no change
-      - name: Set default base tag
-        if: env.BASE_CHANGED == 'false'
+      # 7. Set base image reference
+      - name: Set Base Image
         run: |
-          echo "BASE_TAG=latest" >> $GITHUB_ENV
+          BASE_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.BASE_REPO }}:latest
+          echo "BASE_IMAGE=$BASE_IMAGE" >> $GITHUB_ENV
 
-      # 9. Build & push app image
+      # 8. Build & push app image
       - name: Build and Push App Image
         uses: docker/build-push-action@v5
         with:
@@ -89,9 +76,9 @@ jobs:
           platforms: linux/arm64
           tags: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO }}:${{ github.sha }}
           build-args: |
-            BASE_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.BASE_REPO }}:${{ env.BASE_TAG }}
+            BASE_IMAGE=${{ env.BASE_IMAGE }}
 
-      # 10. Deploy via SSM
+      # 9. Deploy via SSM
       - name: Deploy to EC2 via SSM
         run: |
           set -e
