@@ -1,8 +1,21 @@
 from django.db import models
 
 class CarouselSlide(models.Model):
+    DISPLAY_CHOICES = (
+        ('desktop', 'Desktop Only'),
+        ('mobile', 'Mobile Only'),
+        ('both', 'Both'),
+    )
+
     # Stores up to 5 S3 object keys as a JSON list
     image_keys = models.JSONField(default=list, blank=True)
+    mobile_image_keys = models.JSONField(default=list, blank=True)
+    
+    dimensions = models.CharField(max_length=100, blank=True, help_text="e.g., 1920x1080")
+    mobile_dimensions = models.CharField(max_length=100, blank=True, help_text="e.g., 1080x1920")
+    
+    display_on = models.CharField(max_length=20, choices=DISPLAY_CHOICES, default='both')
+
     heading = models.CharField(max_length=200, blank=True)
     subtext = models.CharField(max_length=300, blank=True)
     cta_text = models.CharField(max_length=50, blank=True)
@@ -16,6 +29,12 @@ class CarouselSlide(models.Model):
             return []
         from core.s3 import generate_presigned_url
         return [generate_presigned_url(k) for k in self.image_keys if k]
+
+    def get_mobile_image_urls(self):
+        if not self.mobile_image_keys:
+            return []
+        from core.s3 import generate_presigned_url
+        return [generate_presigned_url(k) for k in self.mobile_image_keys if k]
 
     def __str__(self):
         return self.heading or f"Slide {self.order}"
